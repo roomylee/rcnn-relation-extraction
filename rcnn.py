@@ -28,8 +28,6 @@ class TextRCNN:
                                          self.pos1_embedded_chars,
                                          self.pos2_embedded_chars], 2)
 
-        embedding_size = text_embedding_size + 2 * pos_embedding_size
-
         # Bidirectional(Left&Right) Recurrent Structure
         with tf.name_scope("bi-rnn"):
             fw_cell = self._get_cell(context_embedding_size, cell_type)
@@ -49,9 +47,10 @@ class TextRCNN:
 
         with tf.name_scope("word-representation"):
             self.x = tf.concat([self.c_left, self.embedded_chars, self.c_right], axis=2, name="x")
+            embedding_size = text_embedding_size + 2*pos_embedding_size + 2*context_embedding_size
 
         with tf.name_scope("text-representation"):
-            W2 = tf.Variable(tf.random_uniform([2*context_embedding_size + embedding_size, hidden_size], -1.0, 1.0), name="W2")
+            W2 = tf.Variable(tf.random_uniform([embedding_size, hidden_size], -1.0, 1.0), name="W2")
             b2 = tf.Variable(tf.constant(0.1, shape=[hidden_size]), name="b2")
             self.y2 = tf.einsum('aij,jk->aik', self.x, W2) + b2
 
