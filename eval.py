@@ -35,20 +35,12 @@ print("")
 
 def eval():
     with tf.device('/cpu:0'):
-        x_text, pos1, pos2, y = data_helpers.load_data_and_labels(FLAGS.eval_dir)
+        x_text, y = data_helpers.load_data_and_labels(FLAGS.eval_dir)
 
     # Map data into vocabulary
-    text_path = os.path.join(FLAGS.checkpoint_dir, "..", "text_vocab")
+    text_path = os.path.join(FLAGS.checkpoint_dir, "..", "vocab")
     text_vocab_processor = tf.contrib.learn.preprocessing.VocabularyProcessor.restore(text_path)
-    text_vec = np.array(list(text_vocab_processor.transform(x_text)))
-
-    # Map data into position
-    position_path = os.path.join(FLAGS.checkpoint_dir, "..", "position_vocab")
-    position_vocab_processor = tf.contrib.learn.preprocessing.VocabularyProcessor.restore(position_path)
-    pos1_vec = np.array(list(position_vocab_processor.transform(pos1)))
-    pos2_vec = np.array(list(position_vocab_processor.transform(pos2)))
-
-    x_eval = np.array([list(i) for i in zip(text_vec, pos1_vec, pos2_vec)])
+    x_eval = np.array(list(text_vocab_processor.transform(x_text)))
     y_eval = np.argmax(y, axis=1)
 
     checkpoint_file = tf.train.latest_checkpoint(FLAGS.checkpoint_dir)
@@ -66,8 +58,6 @@ def eval():
 
             # Get the placeholders from the graph by name
             input_text = graph.get_operation_by_name("input_text").outputs[0]
-            input_pos1 = graph.get_operation_by_name("input_pos1").outputs[0]
-            input_pos2 = graph.get_operation_by_name("input_pos2").outputs[0]
             # input_y = graph.get_operation_by_name("input_y").outputs[0]
             dropout_keep_prob = graph.get_operation_by_name("dropout_keep_prob").outputs[0]
 
@@ -79,11 +69,8 @@ def eval():
 
             # Collect the predictions here
             all_predictions = []
-            for x_eval_batch in batches:
-                x_batch = np.array(x_eval_batch).transpose((1, 0, 2))
-                batch_predictions = sess.run(predictions, {input_text: x_batch[0],
-                                                           input_pos1: x_batch[1],
-                                                           input_pos2: x_batch[2],
+            for x_batch in batches:
+                batch_predictions = sess.run(predictions, {input_text: x_batch,
                                                            dropout_keep_prob: 1.0})
                 all_predictions = np.concatenate([all_predictions, batch_predictions])
 

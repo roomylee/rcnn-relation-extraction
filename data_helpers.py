@@ -33,25 +33,14 @@ def load_data_and_labels(path):
         relation = lines[idx + 1]
 
         sentence = lines[idx].split("\t")[1][1:-1]
-        sentence = sentence.replace("<e1>", " _e1_ ").replace("</e1>", " _/e1_ ")
-        sentence = sentence.replace("<e2>", " _e2_ ").replace("</e2>", " _/e2_ ")
+        sentence = sentence.replace("<e1>", " <e1> ").replace("</e1>", " </e1> ")
+        sentence = sentence.replace("<e2>", " <e2> ").replace("</e2>", " </e2> ")
 
-        tokens = nltk.word_tokenize(sentence)
-
-        tokens.remove('_/e1_')
-        tokens.remove('_/e2_')
-
-        e1 = tokens.index("_e1_")
-        del tokens[e1]
-        e2 = tokens.index("_e2_")
-        del tokens[e2]
-
-        sentence = " ".join(tokens)
         sentence = clean_str(sentence)
 
-        data.append([id, sentence, e1, e2, relation])
+        data.append([id, sentence, relation])
 
-    df = pd.DataFrame(data=data, columns=["id", "sentence", "e1_pos", "e2_pos", "relation"])
+    df = pd.DataFrame(data=data, columns=["id", "sentence", "relation"])
     labelsMapping = {'Other': 0,
                      'Message-Topic(e1,e2)': 1, 'Message-Topic(e2,e1)': 2,
                      'Product-Producer(e1,e2)': 3, 'Product-Producer(e2,e1)': 4,
@@ -65,8 +54,6 @@ def load_data_and_labels(path):
     df['label'] = [labelsMapping[r] for r in df['relation']]
 
     x_text = df['sentence'].tolist()
-
-    pos1, pos2 = get_relative_position(df)
 
     # Label Data
     y = df['label']
@@ -89,31 +76,7 @@ def load_data_and_labels(path):
     labels = dense_to_one_hot(labels_flat, labels_count)
     labels = labels.astype(np.uint8)
 
-    return x_text, pos1, pos2, labels
-
-
-def get_relative_position(df, max_sentence_length=100):
-    # Position data
-    pos1 = []
-    pos2 = []
-    for df_idx in range(len(df)):
-        sentence = df.iloc[df_idx]['sentence']
-        tokens = nltk.word_tokenize(sentence)
-        e1 = df.iloc[df_idx]['e1_pos']
-        e2 = df.iloc[df_idx]['e2_pos']
-
-        d1 = ""
-        d2 = ""
-        for word_idx in range(len(tokens)):
-            d1 += str((max_sentence_length - 1) + word_idx - e1) + " "
-            d2 += str((max_sentence_length - 1) + word_idx - e2) + " "
-        for _ in range(max_sentence_length - len(tokens)):
-            d1 += "999 "
-            d2 += "999 "
-        pos1.append(d1)
-        pos2.append(d2)
-
-    return pos1, pos2
+    return x_text, labels
 
 
 def batch_iter(data, batch_size, num_epochs, shuffle=True):

@@ -3,12 +3,10 @@ import tensorflow as tf
 
 class TextRCNN:
     def __init__(self, sequence_length, num_classes,
-                 text_vocab_size, text_embedding_size, pos_vocab_size, pos_embedding_size, context_embedding_size,
+                 text_vocab_size, text_embedding_size, context_embedding_size,
                  cell_type, hidden_size, l2_reg_lambda=0.0):
         # Placeholders for input, output and dropout
         self.input_text = tf.placeholder(tf.int32, shape=[None, sequence_length], name='input_text')
-        self.input_pos1 = tf.placeholder(tf.int32, shape=[None, sequence_length], name='input_pos1')
-        self.input_pos2 = tf.placeholder(tf.int32, shape=[None, sequence_length], name='input_pos2')
         self.input_y = tf.placeholder(tf.float32, shape=[None, num_classes], name='input_y')
         self.dropout_keep_prob = tf.placeholder(tf.float32, name='dropout_keep_prob')
 
@@ -18,15 +16,7 @@ class TextRCNN:
         # Embeddings
         with tf.device('/cpu:0'), tf.name_scope("embedding"):
             self.W_text = tf.Variable(tf.random_uniform([text_vocab_size, text_embedding_size], -1.0, 1.0), name="W_text")
-            self.text_embedded_chars = tf.nn.embedding_lookup(self.W_text, self.input_text)
-        with tf.device('/cpu:0'), tf.name_scope("position-embedding"):
-            self.W_position = tf.Variable(tf.random_uniform([pos_vocab_size, pos_embedding_size], -1.0, 1.0), name="W_position")
-            self.pos1_embedded_chars = tf.nn.embedding_lookup(self.W_position, self.input_pos1)
-            self.pos2_embedded_chars = tf.nn.embedding_lookup(self.W_position, self.input_pos2)
-
-        self.embedded_chars = tf.concat([self.text_embedded_chars,
-                                         self.pos1_embedded_chars,
-                                         self.pos2_embedded_chars], 2)
+            self.embedded_chars = tf.nn.embedding_lookup(self.W_text, self.input_text)
 
         # Bidirectional(Left&Right) Recurrent Structure
         with tf.name_scope("bi-rnn"):
@@ -47,7 +37,7 @@ class TextRCNN:
 
         with tf.name_scope("word-representation"):
             self.x = tf.concat([self.c_left, self.embedded_chars, self.c_right], axis=2, name="x")
-            embedding_size = text_embedding_size + 2*pos_embedding_size + 2*context_embedding_size
+            embedding_size = text_embedding_size + 2*context_embedding_size
 
         with tf.name_scope("text-representation"):
             W2 = tf.Variable(tf.random_uniform([embedding_size, hidden_size], -1.0, 1.0), name="W2")
