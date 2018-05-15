@@ -13,6 +13,8 @@ warnings.filterwarnings("ignore", category=sklearn.exceptions.UndefinedMetricWar
 
 # Data loading params
 tf.flags.DEFINE_string("eval_dir", "SemEval2010_task8_all_data/SemEval2010_task8_testing_keys/TEST_FILE_FULL.TXT", "Path of evaluation data")
+tf.flags.DEFINE_string("output_dir", "result/prediction.txt", "Path of prediction for evaluation data")
+tf.flags.DEFINE_string("target_dir", "result/answer.txt", "Path of target(answer) file for evaluation data")
 
 # Eval Parameters
 tf.flags.DEFINE_integer("batch_size", 64, "Batch Size (Default: 64)")
@@ -85,10 +87,29 @@ def eval():
                                                            dropout_keep_prob: 1.0})
                 all_predictions = np.concatenate([all_predictions, batch_predictions])
 
+            labelsMapping = {0: 'Other',
+                             1: 'Message-Topic(e1,e2)', 2: 'Message-Topic(e2,e1)',
+                             3: 'Product-Producer(e1,e2)', 4: 'Product-Producer(e2,e1)',
+                             5: 'Instrument-Agency(e1,e2)', 6: 'Instrument-Agency(e2,e1)',
+                             7: 'Entity-Destination(e1,e2)', 8: 'Entity-Destination(e2,e1)',
+                             9: 'Cause-Effect(e1,e2)', 10: 'Cause-Effect(e2,e1)',
+                             11: 'Component-Whole(e1,e2)', 12: 'Component-Whole(e2,e1)',
+                             13: 'Entity-Origin(e1,e2)', 14: 'Entity-Origin(e2,e1)',
+                             15: 'Member-Collection(e1,e2)', 16: 'Member-Collection(e2,e1)',
+                             17: 'Content-Container(e1,e2)', 18: 'Content-Container(e2,e1)'}
+            output_file = open(FLAGS.output_dir, 'w')
+            target_file = open(FLAGS.target_dir, 'w')
+            for i in range(len(all_predictions)):
+                output_file.write("{}\t{}\n".format(i, labelsMapping[all_predictions[i]]))
+                target_file.write("{}\t{}\n".format(i, labelsMapping[y_eval[i]]))
+            output_file.close()
+            target_file.close()
+
             correct_predictions = float(sum(all_predictions == y_eval))
-            print("Total number of test examples: {}".format(len(y_eval)))
+            print("\nTotal number of test examples: {}".format(len(y_eval)))
             print("Accuracy: {:g}".format(correct_predictions / float(len(y_eval))))
-            print("Macro-Average F1 Score: {:g}".format(f1_score(y_eval, all_predictions, average="macro")))
+            print("(2*9+1)-Way Macro-Average F1 Score (excluding Other): {:g}".format(
+                f1_score(y_eval, all_predictions, labels=np.array(range(1, 19)), average="macro")))
 
 
 def main(_):

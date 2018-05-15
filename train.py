@@ -146,6 +146,7 @@ def train():
 
             # Write vocabulary
             text_vocab_processor.save(os.path.join(out_dir, "text_vocab"))
+            pos_vocab_processor.save(os.path.join(out_dir, "position_vocab"))
 
             # Initialize all variables
             sess.run(tf.global_variables_initializer())
@@ -216,10 +217,11 @@ def train():
                         [dev_summary_op, rcnn.loss, rcnn.accuracy, rcnn.predictions], feed_dict_dev)
                     dev_summary_writer.add_summary(summaries_dev, step)
 
-                    f = f1_score(np.argmax(y_dev, axis=1), predictions, average="macro")
-
                     time_str = datetime.datetime.now().isoformat()
-                    print("{}: step {}, loss {:g}, acc {:g}, macro-f {:g}\n".format(time_str, step, loss, accuracy, f))
+                    print("{}: step {}, loss {:g}, acc {:g}".format(time_str, step, loss, accuracy))
+                    print("(2*9+1)-Way Macro-Average F1 Score (excluding Other): {:g}\n".format(
+                        f1_score(np.argmax(y_dev, axis=1), predictions, labels=np.array(range(1, 19)),
+                                 average="macro")))
 
                 # Model checkpoint
                 if step % FLAGS.checkpoint_every == 0:
