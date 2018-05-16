@@ -3,7 +3,7 @@ import tensorflow as tf
 
 class TextRCNN:
     def __init__(self, sequence_length, num_classes,
-                 text_vocab_size, text_embedding_size, context_embedding_size,
+                 vocab_size, text_embedding_size, context_embedding_size,
                  cell_type, hidden_size, l2_reg_lambda=0.0):
         # Placeholders for input, output and dropout
         self.input_text = tf.placeholder(tf.int32, shape=[None, sequence_length], name='input_text')
@@ -15,7 +15,7 @@ class TextRCNN:
 
         # Embeddings
         with tf.device('/cpu:0'), tf.name_scope("embedding"):
-            self.W_text = tf.Variable(tf.random_uniform([text_vocab_size, text_embedding_size], -1.0, 1.0), name="W_text")
+            self.W_text = tf.Variable(tf.random_uniform([vocab_size, text_embedding_size], -1.0, 1.0), name="W_text")
             self.embedded_chars = tf.nn.embedding_lookup(self.W_text, self.input_text)
 
         # Bidirectional(Left&Right) Recurrent Structure

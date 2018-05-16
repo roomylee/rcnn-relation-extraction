@@ -38,9 +38,9 @@ def eval():
         x_text, y = data_helpers.load_data_and_labels(FLAGS.eval_dir)
 
     # Map data into vocabulary
-    text_path = os.path.join(FLAGS.checkpoint_dir, "..", "vocab")
-    text_vocab_processor = tf.contrib.learn.preprocessing.VocabularyProcessor.restore(text_path)
-    x_eval = np.array(list(text_vocab_processor.transform(x_text)))
+    vocab_path = os.path.join(FLAGS.checkpoint_dir, "..", "vocab")
+    vocab_processor = tf.contrib.learn.preprocessing.VocabularyProcessor.restore(vocab_path)
+    x_eval = np.array(list(vocab_processor.transform(x_text)))
     y_eval = np.argmax(y, axis=1)
 
     checkpoint_file = tf.train.latest_checkpoint(FLAGS.checkpoint_dir)

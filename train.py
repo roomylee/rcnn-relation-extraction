@@ -89,7 +89,7 @@ def train():
             rcnn = TextRCNN(
                 sequence_length=x_train.shape[1],
                 num_classes=y_train.shape[1],
-                text_vocab_size=len(vocab_processor.vocabulary_),
+                vocab_size=len(vocab_processor.vocabulary_),
                 text_embedding_size=FLAGS.text_embedding_dim,
                 context_embedding_size=FLAGS.context_embedding_dim,
                 cell_type=FLAGS.cell_type,
